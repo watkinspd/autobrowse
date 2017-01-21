@@ -23,11 +23,11 @@ vault.GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 vault.GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL;
 vault.AUTHORIZED_USER_EMAIL = process.env.AUTHORIZED_USER_EMAIL;
 
-if (!vault) 
-{
-  var vaultF = fs.readFileSync("./vault.json");
-  var vault = JSON.parse(vaultF);
-}
+//if (!vault)
+//{
+//  var vaultF = fs.readFileSync("./vault.json");
+//  var vault = JSON.parse(vaultF);
+//}
 
 // Passport session setup.
 //   To support persistent login sessions, Passport needs to be able to
