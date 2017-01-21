@@ -24,11 +24,14 @@ var GITHUB_CLIENT_SECRET  = process.env.GITHUB_CLIENT_SECRET;
 var GITHUB_CALLBACK_URL   = process.env.GITHUB_CALLBACK_URL;
 var AUTHORIZED_USER_EMAIL = process.env.AUTHORIZED_USER_EMAIL;
 
-//if (!vault)
-//{
-//  var vaultF = fs.readFileSync("./vault.json");
-//  var vault = JSON.parse(vaultF);
-//}
+if (!GITHUB_CLIENT_ID) {
+  var vaultF = fs.readFileSync("./vault.json");
+  var vault = JSON.parse(vaultF);
+  GITHUB_CLIENT_ID = vault.GITHUB_CLIENT_ID;
+  GITHUB_CLIENT_SECRET = vault.GITHUB_CLIENT_SECRET;
+  GITHUB_CALLBACK_URL = vault.GITHUB_CLIENT_SECRET;
+  AUTHORIZED_USER_EMAIL = vault.AUTHORIZED_USER_EMAIL;
+};
 
 // Passport session setup.
 //   To support persistent login sessions, Passport needs to be able to
