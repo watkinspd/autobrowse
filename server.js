@@ -18,6 +18,8 @@ var curIndex = 0; // a var to hold the current index of the current url
 
 
 var vault = '';
+console.log(process.env.GITHUB_CLIENT_ID);
+
 vault.GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 vault.GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 vault.GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL;
