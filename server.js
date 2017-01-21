@@ -16,8 +16,18 @@ var urlList = ['https://google.com', 'https://bing.com' ]
 
 var curIndex = 0; // a var to hold the current index of the current url
 
-var vaultF = fs.readFileSync("./vault.json");
-var vault = JSON.parse(vaultF);
+if (process.env.GITHUB_CLIENT_ID) {
+  var vault = '';
+  vault.GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+  vault.GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
+  vault.GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL;
+  vault.AUTHORIZED_USER_EMAIL = process.env.AUTHORIZED_USER_EMAIL;
+}
+else
+{
+  var vaultF = fs.readFileSync("./vault.json");
+  var vault = JSON.parse(vaultF);
+}
 
 // Passport session setup.
 //   To support persistent login sessions, Passport needs to be able to
