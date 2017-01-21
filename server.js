@@ -18,7 +18,6 @@ var curIndex = 0; // a var to hold the current index of the current url
 
 var vaultF = fs.readFileSync("./vault.json");
 var vault = JSON.parse(vaultF);
-console.log(vault);
 
 // Passport session setup.
 //   To support persistent login sessions, Passport needs to be able to
