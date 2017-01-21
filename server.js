@@ -77,7 +77,7 @@ var contentHTML = '<script type="text/javascript">' +
 '  setTimeout(function() { ' +
 '    wnd.window.close(); ' +
 '    window.location.reload(true);'+
-'  },12000);' +
+'  },40000);' +
 '</script>';
 
 return(contentHTML);
