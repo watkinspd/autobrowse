@@ -4,10 +4,18 @@
   "description": "Timed delayed display of each URL from a list of URLs",
   "main": "server.js",
   "dependencies": {
+    "body-parser": "^1.16.0",
     "check-types": "^7.1.0",
     "express": "^4.14.0",
+    "express-partials": "^0.3.0",
+    "express-session": "^1.14.2",
     "i": "^0.3.5",
+    "method-override": "^2.3.7",
     "npm": "^4.1.1",
+    "passport": "^0.3.2",
+    "passport-github2": "^0.1.10",
+    "passport-oauth2": "^1.x.x",
+    "util": "^0.10.3",
     "valid-url": "^1.0.9"
   },
   "engine": {
