@@ -69,13 +69,14 @@ var contentHTML = '<script type="text/javascript">' +
 return(contentHTML);
 }
 
-// Simple route middleware to ensure user is authenticated.
+// Simple route middleware to ensure user is authenticated and authorized
 //   Use this route middleware on any resource that needs to be protected.  If
 //   the request is authenticated (typically via a persistent login session),
 //   the request will proceed.  Otherwise, the user will be redirected to the
 //   login page.
+//   Hacked an access control measure for a single user based on github account email
 function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) { return next(); }
+  if (req.isAuthenticated() && req.user.emails[0].value === vault.AUTHORIZED_USER_EMAIL ) { return next(); }
   res.redirect('/login')
 }
 
