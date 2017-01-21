@@ -1,4 +1,7 @@
 var express = require('express');
+var validUrl = require('valid-url');
+var check = require('check-types');
+
 var app = express();
 
 var urlList = ['https://google.com', 'https://bing.com' ]
@@ -52,39 +55,67 @@ app.get('/list', function(req, res) {
 });
 
 app.get('/add', function(req, res) {
-    urlList.push(req.query.url);
+    if (validUrl.isUri(req.query.url)) {
+      urlList.push(req.query.url);
+      var i = 0;
+      var resText = '';
 
-    var i = 0;
-    var resText = '';
-
-    urlList.forEach(function(value) {
-        resText = resText + i + ' ' + value + "\n";
-        i++;
-    });
-
-    res.format({
-      'text/plain' : function () {
-          res.send(resText);
-        }
-    });
+      urlList.forEach(function(value) {
+          resText = resText + i + ' ' + value + "\n";
+          i++;
+      });
+      res.format({
+        'text/plain' : function () {
+            res.send(resText);
+          }
+      });
+  }
+  else {
+      res.format({
+        'text/plain' : function () {
+            res.send('Not a valid url. Got >>' + req.query.url);
+          }
+      });
+  }
 });
 
 app.get('/remove', function(req, res) {
-    urlList.splice(req.query.number,1);
+    var num = parseInt(req.query.number);
 
-    var i = 0;
-    var resText = '';
+    if (check.integer(num)) {
+        if (num >= 0 && num < urlList.length) {
 
-    urlList.forEach(function(value) {
-        resText = resText + i + ' ' + value + "\n";
-        i++;
-    });
+            urlList.splice(num,1);
+            var i = 0;
+            var resText = '';
 
-    res.format({
-      'text/plain' : function () {
-          res.send(resText);
+            urlList.forEach(function(value) {
+                resText = resText + i + ' ' + value + "\n";
+                i++;
+            });
+
+            res.format({
+              'text/plain' : function () {
+                  res.send(resText);
+                }
+            });
+          }
+        else {
+          res.format({
+            'text/plain' : function () {
+                res.send('Number not in range. Got >>' + req.query.number);
+              }
+          });
         }
-    });
+
+    }
+    else {
+      res.format({
+        'text/plain' : function () {
+            res.send('Not a valid number. Got >>' + req.query.number);
+          }
+      });
+    }
 });
 
 app.listen(8080);
