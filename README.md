@@ -1,2 +1,2 @@
 # autobrowse
-Nodejs server causes browser to run a timed display of each URL in a list of URLs 
+Nodejs server to have a browser to run a timed display for each URL in a list of URLs
