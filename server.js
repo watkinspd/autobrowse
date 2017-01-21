@@ -18,12 +18,11 @@ var curIndex = 0; // a var to hold the current index of the current url
 
 
 var vault = '';
-console.log(process.env.GITHUB_CLIENT_ID);
 
-vault.GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
-vault.GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
-vault.GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL;
-vault.AUTHORIZED_USER_EMAIL = process.env.AUTHORIZED_USER_EMAIL;
+var GITHUB_CLIENT_ID      = process.env.GITHUB_CLIENT_ID;
+var GITHUB_CLIENT_SECRET  = process.env.GITHUB_CLIENT_SECRET;
+var GITHUB_CALLBACK_URL   = process.env.GITHUB_CALLBACK_URL;
+var AUTHORIZED_USER_EMAIL = process.env.AUTHORIZED_USER_EMAIL;
 
 //if (!vault)
 //{
@@ -52,9 +51,9 @@ passport.deserializeUser(function(obj, done) {
 //   credentials (in this case, an accessToken, refreshToken, and GitHub
 //   profile), and invoke a callback with a user object.
 passport.use(new GitHubStrategy({
-    clientID: vault.GITHUB_CLIENT_ID,
-    clientSecret: vault.GITHUB_CLIENT_SECRET,
-    callbackURL: vault.GITHUB_CALLBACK_URL
+    clientID: GITHUB_CLIENT_ID,
+    clientSecret: GITHUB_CLIENT_SECRET,
+    callbackURL: GITHUB_CALLBACK_URL
   },
   function(accessToken, refreshToken, profile, done) {
     // asynchronous verification, for effect...
@@ -88,7 +87,7 @@ return(contentHTML);
 //   login page.
 //   Hacked an access control measure for a single user based on github account email
 function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated() && req.user.emails[0].value === vault.AUTHORIZED_USER_EMAIL ) { return next(); }
+  if (req.isAuthenticated() && req.user.emails[0].value === AUTHORIZED_USER_EMAIL ) { return next(); }
   res.redirect('/login')
 }
 
