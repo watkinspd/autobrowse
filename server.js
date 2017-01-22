@@ -116,7 +116,7 @@ app.get('/help', function(req, res) {
     });
 });
 
-app.get('/run', ensureAuthenticated, function(req, res) {
+app.get('/run', function(req, res) {
     res.format({
       'text/html' : function () {
         res.send(responseHTML(urlList[curIndex]));
