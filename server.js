@@ -36,21 +36,25 @@ function readOrSetUrlList() {
   // if there is no urlList.json file then create one
   // if there is a urlList.json file then use it
   // Check that the file exists locally
-  if(!fs.existsSync(URLLIST_LOCATION)) {
-    writeUrlListToDisk(urlR);
-    }
-    else {
-        var urlF = fs.readFileSync(URLLIST_LOCATION);
-        var urlR = JSON.parse(urlF);
-    }
+  try {
+    var urlF = fs.readFileSync(URLLIST_LOCATION);
+    var urlR = JSON.parse(urlF);
+  }
+  catch (e) {
+    console.log("no " + URLLIST_LOCATION + " found.");
+  }
   return(urlR);
 }
 
 function writeUrlListToDisk(urlList) {
   var urlListAsText = JSON.stringify(urlList);
-  fs.writeFileSync(URLLIST_LOCATION, urlListAsText, (err) => {
-      if (err) throw err;
-  });
+  try {
+    fs.writeFileSync(URLLIST_LOCATION, urlListAsText);
+  }
+  catch (e) {
+    console.log ('error on filewrite');
+  }
+  return;
 }
 
 var app = express();
