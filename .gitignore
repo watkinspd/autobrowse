@@ -2,7 +2,7 @@
 vault.json
 
 #Data
-./data
+/data
 
 # Logs
 logs
