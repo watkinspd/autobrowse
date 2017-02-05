@@ -25,6 +25,14 @@ if (!vault.GITHUB_CLIENT_ID) {
   var vault = JSON.parse(vaultF);
 };
 
+
+// careful about how you set the path to urlList.json
+// example where is /data folder relative to the running code?
+// if running locally via node then you can have a data folder
+// in the folder where server.js is
+// but if you are on some platform where you mounted /data as a volume
+// then you have to be sure about how to set the enviromnment variable with the
+// file path 
 var URLLIST_LOCATION = process.env.URLLIST_LOCATION || './data/urlList.json';
 
 var urlList = readOrSetUrlList();
