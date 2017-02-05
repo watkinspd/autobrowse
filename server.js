@@ -10,28 +10,62 @@ var GitHubStrategy = require('passport-github2').Strategy;
 var partials = require('express-partials');
 var fs = require('fs');
 
-var app = express();
-
-var urlList = ['https://google.com', 'https://bing.com' ]
-
+var DEFAULT_TIMER = process.env.DEFAULT_TIMER || "40000";
 var curIndex = 0; // a var to hold the current index of the current url
 
-
-var vault = '';
-
-var GITHUB_CLIENT_ID      = process.env.GITHUB_CLIENT_ID;
-var GITHUB_CLIENT_SECRET  = process.env.GITHUB_CLIENT_SECRET;
-var GITHUB_CALLBACK_URL   = process.env.GITHUB_CALLBACK_URL;
-var AUTHORIZED_USER_EMAIL = process.env.AUTHORIZED_USER_EMAIL;
-
-if (!GITHUB_CLIENT_ID) {
+// environment variables take precedence over vault.json
+var vault = {
+  "GITHUB_CLIENT_ID" : process.env.GITHUB_CLIENT_ID,
+  "GITHUB_CLIENT_SECRET" : process.env.GITHUB_CLIENT_SECRET,
+  "GITHUB_CALLBACK_URL" : process.env.GITHUB_CALLBACK_URL,
+  "AUTHORIZED_USER_EMAIL" : process.env.AUTHORIZED_USER_EMAIL
+};
+if (!vault.GITHUB_CLIENT_ID) {
   var vaultF = fs.readFileSync("./vault.json");
   var vault = JSON.parse(vaultF);
-  GITHUB_CLIENT_ID = vault.GITHUB_CLIENT_ID;
-  GITHUB_CLIENT_SECRET = vault.GITHUB_CLIENT_SECRET;
-  GITHUB_CALLBACK_URL = vault.GITHUB_CLIENT_SECRET;
-  AUTHORIZED_USER_EMAIL = vault.AUTHORIZED_USER_EMAIL;
 };
+
+
+// careful about how you set the path to urlList.json
+// example where is /data folder relative to the running code?
+// if running locally via node then you can have a data folder
+// in the folder where server.js is
+// but if you are on some platform where you mounted /data as a volume
+// then you have to be sure about how to set the enviromnment variable with the
+// file path 
+var URLLIST_LOCATION = process.env.URLLIST_LOCATION || './data/urlList.json';
+
+var urlList = readOrSetUrlList();
+
+function readOrSetUrlList() {
+  var urlR = [{"url":"https://google.com","timer":"40000"},
+              {"url":"https://bing.com","timer":"20000"},]
+
+  // if there is no urlList.json file then create one
+  // if there is a urlList.json file then use it
+  // Check that the file exists locally
+  try {
+    var urlF = fs.readFileSync(URLLIST_LOCATION);
+    var urlR = JSON.parse(urlF);
+  }
+  catch (e) {
+    console.log("no " + URLLIST_LOCATION + " found.");
+  }
+  return(urlR);
+}
+
+function writeUrlListToDisk(urlList) {
+  var urlListAsText = JSON.stringify(urlList);
+  try {
+    fs.writeFileSync(URLLIST_LOCATION, urlListAsText);
+  }
+  catch (e) {
+    console.log ('error on filewrite');
+  }
+  return;
+}
+
+var app = express();
 
 // Passport session setup.
 //   To support persistent login sessions, Passport needs to be able to
@@ -54,9 +88,9 @@ passport.deserializeUser(function(obj, done) {
 //   credentials (in this case, an accessToken, refreshToken, and GitHub
 //   profile), and invoke a callback with a user object.
 passport.use(new GitHubStrategy({
-    clientID: GITHUB_CLIENT_ID,
-    clientSecret: GITHUB_CLIENT_SECRET,
-    callbackURL: GITHUB_CALLBACK_URL
+    clientID: vault.GITHUB_CLIENT_ID,
+    clientSecret: vault.GITHUB_CLIENT_SECRET,
+    callbackURL: vault.GITHUB_CALLBACK_URL
   },
   function(accessToken, refreshToken, profile, done) {
     // asynchronous verification, for effect...
@@ -71,17 +105,18 @@ passport.use(new GitHubStrategy({
   }
 ));
 
-function responseHTML(url) {
+function responseHTML(urlItem) {
 var contentHTML = '<script type="text/javascript">' +
-'  var wnd = window.open('+ "'" + url + "'" +');' +
+'  var wnd = window.open('+ "'" + urlItem.url + "'" +');' +
 '  setTimeout(function() { ' +
 '    wnd.window.close(); ' +
 '    window.location.reload(true);'+
-'  },40000);' +
+'  },'+  urlItem.timer + ');' +
 '</script>';
 
 return(contentHTML);
 }
+
 
 // Simple route middleware to ensure user is authenticated and authorized
 //   Use this route middleware on any resource that needs to be protected.  If
@@ -90,7 +125,7 @@ return(contentHTML);
 //   login page.
 //   Hacked an access control measure for a single user based on github account email
 function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated() && req.user.emails[0].value === AUTHORIZED_USER_EMAIL ) { return next(); }
+  if (req.isAuthenticated() && req.user.emails[0].value === vault.AUTHORIZED_USER_EMAIL ) { return next(); }
   res.redirect('/login')
 }
 
@@ -111,7 +146,7 @@ app.use(express.static(__dirname + '/public'));
 app.get('/help', function(req, res) {
     res.format({
       'text/plain' : function () {
-          res.send('/run, /list, /add/?url=https://<name> , /remove/?number=<number>');
+          res.send('/run, /list, /add/?timer=<milliseconds>&url=https://<name> , /remove/?number=<number>');
         }
     });
 });
@@ -131,7 +166,7 @@ app.get('/list', ensureAuthenticated, function(req, res) {
     var resText = '';
 
     urlList.forEach(function(value) {
-        resText = resText + i + ' ' + value + "\n";
+        resText = resText + i + 'timer=' + value.timer + ', url=' + value.url + "\n";
         i++;
     });
 
@@ -144,12 +179,17 @@ app.get('/list', ensureAuthenticated, function(req, res) {
 
 app.get('/add', ensureAuthenticated, function(req, res) {
     if (validUrl.isUri(req.query.url)) {
-      urlList.push(req.query.url);
+
+      //url was valid so add it the list and write the updated list to disk
+
+      urlList.push( { "url": req.query.url, "timer": (req.query.timer || DEFAULT_TIMER) } );
+      writeUrlListToDisk(urlList);
+
       var i = 0;
       var resText = '';
 
       urlList.forEach(function(value) {
-          resText = resText + i + ' ' + value + "\n";
+          resText = resText + i + 'timer=' + value.timer + ', url=' + value.url + "\n";
           i++;
       });
       res.format({
@@ -172,13 +212,16 @@ app.get('/remove', ensureAuthenticated, function(req, res) {
 
     if (check.integer(num)) {
         if (num >= 0 && num < urlList.length) {
-
+        // number to delete was within range so remove it and write updated
+        // list to disk
             urlList.splice(num,1);
+            writeUrlListToDisk(urlList);
+
             var i = 0;
             var resText = '';
 
             urlList.forEach(function(value) {
-                resText = resText + i + ' ' + value + "\n";
+                resText = resText + i + 'timer=' + value.timer + ', url=' + value.url + "\n";
                 i++;
             });
 
