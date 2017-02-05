@@ -10,26 +10,50 @@ var GitHubStrategy = require('passport-github2').Strategy;
 var partials = require('express-partials');
 var fs = require('fs');
 
-var app = express();
-
-var urlList = [ { "url": "https://google.com", "timer" : "40000" },
-                { "url" : "https://bing.com", "timer" : "20000" } ]
-
+var DEFAULT_TIMER = process.env.DEFAULT_TIMER || "40000";
 var curIndex = 0; // a var to hold the current index of the current url
 
-var DEFAULT_TIMER = "40000";
-
+// environment variables take precedence over vault.json
 var vault = {
   "GITHUB_CLIENT_ID" : process.env.GITHUB_CLIENT_ID,
   "GITHUB_CLIENT_SECRET" : process.env.GITHUB_CLIENT_SECRET,
   "GITHUB_CALLBACK_URL" : process.env.GITHUB_CALLBACK_URL,
   "AUTHORIZED_USER_EMAIL" : process.env.AUTHORIZED_USER_EMAIL
 };
-
 if (!vault.GITHUB_CLIENT_ID) {
   var vaultF = fs.readFileSync("./vault.json");
   var vault = JSON.parse(vaultF);
 };
+
+var URLLIST_LOCATION = process.env.URLLIST_LOCATION || './data/urlList.json';
+
+var urlList = readOrSetUrlList();
+
+function readOrSetUrlList() {
+  var urlR = [{"url":"https://google.com","timer":"40000"},
+              {"url":"https://bing.com","timer":"20000"},]
+
+  // if there is no urlList.json file then create one
+  // if there is a urlList.json file then use it
+  // Check that the file exists locally
+  if(!fs.existsSync(URLLIST_LOCATION)) {
+    writeUrlListToDisk(urlR);
+    }
+    else {
+        var urlF = fs.readFileSync(URLLIST_LOCATION);
+        var urlR = JSON.parse(urlF);
+    }
+  return(urlR);
+}
+
+function writeUrlListToDisk(urlList) {
+  var urlListAsText = JSON.stringify(urlList);
+  fs.writeFile(URLLIST_LOCATION, urlListAsText, (err) => {
+      if (err) throw err;
+  });
+}
+
+var app = express();
 
 // Passport session setup.
 //   To support persistent login sessions, Passport needs to be able to
@@ -80,6 +104,7 @@ var contentHTML = '<script type="text/javascript">' +
 
 return(contentHTML);
 }
+
 
 // Simple route middleware to ensure user is authenticated and authorized
 //   Use this route middleware on any resource that needs to be protected.  If
@@ -142,7 +167,12 @@ app.get('/list', ensureAuthenticated, function(req, res) {
 
 app.get('/add', ensureAuthenticated, function(req, res) {
     if (validUrl.isUri(req.query.url)) {
+
+      //url was valid so add it the list and write the updated list to disk
+
       urlList.push( { "url": req.query.url, "timer": (req.query.timer || DEFAULT_TIMER) } );
+      writeUrlListToDisk(urlList);
+
       var i = 0;
       var resText = '';
 
@@ -170,8 +200,11 @@ app.get('/remove', ensureAuthenticated, function(req, res) {
 
     if (check.integer(num)) {
         if (num >= 0 && num < urlList.length) {
-
+        // number to delete was within range so remove it and write updated
+        // list to disk
             urlList.splice(num,1);
+            writeUrlListToDisk(urlList);
+
             var i = 0;
             var resText = '';
 

@@ -1,6 +1,9 @@
 #secrets
 vault.json
 
+#Data
+./data
+
 # Logs
 logs
 *.log
