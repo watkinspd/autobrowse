@@ -12,25 +12,23 @@ var fs = require('fs');
 
 var app = express();
 
-var urlList = ['https://google.com', 'https://bing.com' ]
+var urlList = [ { "url": "https://google.com", "timer" : "40000" },
+                { "url" : "https://bing.com", "timer" : "20000" } ]
 
 var curIndex = 0; // a var to hold the current index of the current url
 
+var DEFAULT_TIMER = "40000";
 
-var vault = '';
+var vault = {
+  "GITHUB_CLIENT_ID" : process.env.GITHUB_CLIENT_ID,
+  "GITHUB_CLIENT_SECRET" : process.env.GITHUB_CLIENT_SECRET,
+  "GITHUB_CALLBACK_URL" : process.env.GITHUB_CALLBACK_URL,
+  "AUTHORIZED_USER_EMAIL" : process.env.AUTHORIZED_USER_EMAIL
+};
 
-var GITHUB_CLIENT_ID      = process.env.GITHUB_CLIENT_ID;
-var GITHUB_CLIENT_SECRET  = process.env.GITHUB_CLIENT_SECRET;
-var GITHUB_CALLBACK_URL   = process.env.GITHUB_CALLBACK_URL;
-var AUTHORIZED_USER_EMAIL = process.env.AUTHORIZED_USER_EMAIL;
-
-if (!GITHUB_CLIENT_ID) {
+if (!vault.GITHUB_CLIENT_ID) {
   var vaultF = fs.readFileSync("./vault.json");
   var vault = JSON.parse(vaultF);
-  GITHUB_CLIENT_ID = vault.GITHUB_CLIENT_ID;
-  GITHUB_CLIENT_SECRET = vault.GITHUB_CLIENT_SECRET;
-  GITHUB_CALLBACK_URL = vault.GITHUB_CLIENT_SECRET;
-  AUTHORIZED_USER_EMAIL = vault.AUTHORIZED_USER_EMAIL;
 };
 
 // Passport session setup.
@@ -54,9 +52,9 @@ passport.deserializeUser(function(obj, done) {
 //   credentials (in this case, an accessToken, refreshToken, and GitHub
 //   profile), and invoke a callback with a user object.
 passport.use(new GitHubStrategy({
-    clientID: GITHUB_CLIENT_ID,
-    clientSecret: GITHUB_CLIENT_SECRET,
-    callbackURL: GITHUB_CALLBACK_URL
+    clientID: vault.GITHUB_CLIENT_ID,
+    clientSecret: vault.GITHUB_CLIENT_SECRET,
+    callbackURL: vault.GITHUB_CALLBACK_URL
   },
   function(accessToken, refreshToken, profile, done) {
     // asynchronous verification, for effect...
@@ -71,13 +69,13 @@ passport.use(new GitHubStrategy({
   }
 ));
 
-function responseHTML(url) {
+function responseHTML(urlItem) {
 var contentHTML = '<script type="text/javascript">' +
-'  var wnd = window.open('+ "'" + url + "'" +');' +
+'  var wnd = window.open('+ "'" + urlItem.url + "'" +');' +
 '  setTimeout(function() { ' +
 '    wnd.window.close(); ' +
 '    window.location.reload(true);'+
-'  },40000);' +
+'  },'+  urlItem.timer + ');' +
 '</script>';
 
 return(contentHTML);
@@ -90,7 +88,7 @@ return(contentHTML);
 //   login page.
 //   Hacked an access control measure for a single user based on github account email
 function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated() && req.user.emails[0].value === AUTHORIZED_USER_EMAIL ) { return next(); }
+  if (req.isAuthenticated() && req.user.emails[0].value === vault.AUTHORIZED_USER_EMAIL ) { return next(); }
   res.redirect('/login')
 }
 
@@ -111,7 +109,7 @@ app.use(express.static(__dirname + '/public'));
 app.get('/help', function(req, res) {
     res.format({
       'text/plain' : function () {
-          res.send('/run, /list, /add/?url=https://<name> , /remove/?number=<number>');
+          res.send('/run, /list, /add/?timer=<milliseconds>&url=https://<name> , /remove/?number=<number>');
         }
     });
 });
@@ -131,7 +129,7 @@ app.get('/list', ensureAuthenticated, function(req, res) {
     var resText = '';
 
     urlList.forEach(function(value) {
-        resText = resText + i + ' ' + value + "\n";
+        resText = resText + i + 'timer=' + value.timer + ', url=' + value.url + "\n";
         i++;
     });
 
@@ -144,12 +142,12 @@ app.get('/list', ensureAuthenticated, function(req, res) {
 
 app.get('/add', ensureAuthenticated, function(req, res) {
     if (validUrl.isUri(req.query.url)) {
-      urlList.push(req.query.url);
+      urlList.push( { "url": req.query.url, "timer": (req.query.timer || DEFAULT_TIMER) } );
       var i = 0;
       var resText = '';
 
       urlList.forEach(function(value) {
-          resText = resText + i + ' ' + value + "\n";
+          resText = resText + i + 'timer=' + value.timer + ', url=' + value.url + "\n";
           i++;
       });
       res.format({
@@ -178,7 +176,7 @@ app.get('/remove', ensureAuthenticated, function(req, res) {
             var resText = '';
 
             urlList.forEach(function(value) {
-                resText = resText + i + ' ' + value + "\n";
+                resText = resText + i + 'timer=' + value.timer + ', url=' + value.url + "\n";
                 i++;
             });
 
