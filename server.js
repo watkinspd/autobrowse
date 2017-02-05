@@ -32,18 +32,18 @@ if (!vault.GITHUB_CLIENT_ID) {
 // in the folder where server.js is
 // but if you are on some platform where you mounted /data as a volume
 // then you have to be sure about how to set the enviromnment variable with the
-// file path 
+// file path
 var URLLIST_LOCATION = process.env.URLLIST_LOCATION || './data/urlList.json';
 
 var urlList = readOrSetUrlList();
 
 function readOrSetUrlList() {
+
+  // set a default list of urls
   var urlR = [{"url":"https://google.com","timer":"40000"},
               {"url":"https://bing.com","timer":"20000"},]
 
-  // if there is no urlList.json file then create one
   // if there is a urlList.json file then use it
-  // Check that the file exists locally
   try {
     var urlF = fs.readFileSync(URLLIST_LOCATION);
     var urlR = JSON.parse(urlF);
