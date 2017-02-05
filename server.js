@@ -48,7 +48,7 @@ function readOrSetUrlList() {
 
 function writeUrlListToDisk(urlList) {
   var urlListAsText = JSON.stringify(urlList);
-  fs.writeFile(URLLIST_LOCATION, urlListAsText, (err) => {
+  fs.writeFileSync(URLLIST_LOCATION, urlListAsText, (err) => {
       if (err) throw err;
   });
 }
