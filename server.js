@@ -125,6 +125,7 @@ return(contentHTML);
 //   login page.
 //   Hacked an access control measure for a single user based on github account email
 function ensureAuthenticated(req, res, next) {
+  console.log ('req.isAuthenticated=' + req.isAuthenticated)
   if (req.isAuthenticated() && req.user.emails[0].value === vault.AUTHORIZED_USER_EMAIL ) { return next(); }
   res.redirect('/login')
 }
